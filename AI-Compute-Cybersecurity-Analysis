@@ -1,0 +1,71 @@
+import pandas as pd
+import kagglehub
+import os
+import glob
+
+class DataEngine:
+    def __init__(self):
+        self.ai_df = None       # Technical (Models)
+        self.gpu_df = None      # Infrastructure (Compute)
+        self.econ_df = None     # Economic (The new Kaggle data)
+        self.itu_df = None      # Policy (Security)
+
+    def load_local_data(self):
+        """Loads the static CSVs you already have."""
+        try:
+            self.ai_df = pd.read_csv('all_ai_models.csv')
+            self.gpu_df = pd.read_csv('gpu_clusters.csv')
+            self.itu_df = pd.read_csv('ITU_GCI_GCI_OVRL_SCRE.csv')
+            print("✅ Local Intelligence Loaded (Technical & Policy)")
+        except FileNotFoundError:
+            print("⚠️ Warning: Local files not found.")
+
+    def fetch_live_economy_data(self):
+        """
+        Uses KaggleHub to fetch the latest AI Economic Index.
+        Demonstrates 'Data Pipeline' capabilities.
+        """
+        print("🔄 Connecting to Kaggle Hub for Economic Signals...")
+        try:
+            # 1. Download the dataset directory
+            path = kagglehub.dataset_download("katerynameleshenko/ai-index")
+            print(f"   ↳ Downloaded to: {path}")
+
+            # 2. Smart File Detection (Finds the CSV automatically)
+            # We look for any CSV in the downloaded folder
+            csv_files = glob.glob(os.path.join(path, "*.csv"))
+            
+            if csv_files:
+                # Load the first CSV found (usually the main dataset)
+                target_file = csv_files[0]
+                self.econ_df = pd.read_csv(target_file)
+                print(f"✅ Economic Intelligence Loaded: {len(self.econ_df)} rows")
+                print(f"   ↳ Source: {os.path.basename(target_file)}")
+            else:
+                print("❌ Error: Dataset downloaded, but no CSV files found in folder.")
+                
+        except Exception as e:
+            print(f"❌ Pipeline Error: {e}")
+
+    def get_strategic_merge(self):
+        """
+        Merges Technical, Policy, and Economic data into a single view.
+        """
+        # (Your existing merging logic goes here...)
+        # You can now add columns from self.econ_df like 'Total Investment'
+        pass
+
+# --- Execution for Portfolio ---
+if __name__ == "__main__":
+    engine = DataEngine()
+    
+    # 1. Load the baseline
+    engine.load_local_data()
+    
+    # 2. Augment with the "Live" pipeline
+    engine.fetch_live_economy_data()
+    
+    # 3. Show off the result
+    if engine.econ_df is not None:
+        print("\n--- New Economic Insights Available ---")
+        print(engine.econ_df.head(3))
