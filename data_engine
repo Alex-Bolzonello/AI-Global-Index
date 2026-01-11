@@ -1,0 +1,63 @@
+# data_engine.py
+import pandas as pd
+import kagglehub
+import os
+import glob
+
+class DataEngine:
+    def __init__(self):
+        self.ai_df = None       # Technical (Models)
+        self.gpu_df = None      # Infrastructure (Compute)
+        self.econ_df = None     # Economic (The new Kaggle data)
+        self.itu_df = None      # Policy (Security)
+
+    def load_local_data(self):
+        """Loads the static CSVs you already have."""
+        print("📂 Loading local datasets...")
+        try:
+            # Ensure these filenames match exactly what you uploaded
+            self.ai_df = pd.read_csv('all_ai_models.csv')
+            self.gpu_df = pd.read_csv('gpu_clusters.csv')
+            self.itu_df = pd.read_csv('ITU_GCI_GCI_OVRL_SCRE.csv')
+            print("✅ Local Intelligence Loaded (Technical & Policy)")
+        except FileNotFoundError as e:
+            print(f"⚠️ Warning: {e}")
+
+    def fetch_live_economy_data(self):
+        """
+        Uses KaggleHub to fetch the latest AI Economic Index.
+        Demonstrates 'Data Pipeline' capabilities.
+        """
+        print("🔄 Connecting to Kaggle Hub for Economic Signals...")
+        try:
+            # 1. Download the dataset directory
+            path = kagglehub.dataset_download("katerynameleshenko/ai-index")
+            print(f"   ↳ Downloaded to: {path}")
+
+            # 2. Smart File Detection (Finds the CSV automatically)
+            csv_files = glob.glob(os.path.join(path, "*.csv"))
+            
+            if csv_files:
+                target_file = csv_files[0]
+                self.econ_df = pd.read_csv(target_file)
+                print(f"✅ Economic Intelligence Loaded: {len(self.econ_df)} rows")
+            else:
+                print("❌ Error: Dataset downloaded, but no CSV files found in folder.")
+                
+        except Exception as e:
+            print(f"❌ Pipeline Error: {e}")
+
+# --- Execution Test ---
+if __name__ == "__main__":
+    engine = DataEngine()
+    
+    # 1. Load the baseline
+    engine.load_local_data()
+    
+    # 2. Augment with the "Live" pipeline
+    engine.fetch_live_economy_data()
+    
+    # 3. Show off the result
+    if engine.econ_df is not None:
+        print("\n--- New Economic Insights Available ---")
+        print(engine.econ_df.head(3))
